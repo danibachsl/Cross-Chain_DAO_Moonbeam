@@ -1,0 +1,23 @@
+{
+  "name": "cross-chain_dao_moonbeam",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danibachsl/Cross-Chain_DAO_Moonbeam.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/danibachsl/Cross-Chain_DAO_Moonbeam/issues"
+  },
+  "homepage": "https://github.com/danibachsl/Cross-Chain_DAO_Moonbeam#readme",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "hardhat": "^2.14.1"
+  }
+}
