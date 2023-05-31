@@ -5,14 +5,16 @@ import "@openzeppelin/contracts/governance/Governor.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorSettings.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
+import "@layerzerolabs/solidity-examples/contracts/lzApp/NonblockingLzApp.sol";
 
-contract CrossChainDAO is
+abstract contract CrossChainDAO is
     Governor,
     GovernorSettings,
     GovernorCountingSimple,
-    GovernorVotes
+    GovernorVotes,
+    NonblockingLzApp
 {
-    constructor(IVotes _token)
+    constructor(IVotes _token, address lzEndpoint)
         Governor("CrossChainDAO")
         GovernorSettings(
             0, /* 0 block */
@@ -20,7 +22,17 @@ contract CrossChainDAO is
             0
         )
         GovernorVotes(_token)
+        NonblockingLzApp(lzEndpoint)
     {}
+
+    function _nonblockingLzReceive(
+        uint16 _srcChainId,
+        bytes memory,
+        uint64,
+        bytes memory _payload
+    ) internal override {
+        // TODO: add cross-chain logic
+    }
 
     function quorum(uint256 blockNumber)
         public
