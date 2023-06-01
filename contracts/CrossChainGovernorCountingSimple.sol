@@ -10,7 +10,24 @@ import "@openzeppelin/contracts/governance/Governor.sol";
  *
  * _Available since v4.3._
  */
-abstract contract GovernorCountingSimple is Governor {
+abstract contract CrossChainGovernorCountingSimple is Governor {
+    // The lz-chain IDs that the DAO expects to receive data from during the
+    // collection phase
+    uint16[] public spokeChains;
+
+    constructor(uint16[] memory _spokeChains) {
+        spokeChains = _spokeChains;
+    }
+
+    // Will store the vote data received from other chains
+    // Does not include a map of users to votes because that information stays on the spoke chains.
+    struct SpokeProposalVote {
+        uint256 forVotes;
+        uint256 againstVotes;
+        uint256 abstainVotes;
+        bool initialized;
+    }
+
     /**
      * @dev Supported vote types. Matches Governor Bravo ordering.
      */
@@ -27,6 +44,8 @@ abstract contract GovernorCountingSimple is Governor {
         mapping(address => bool) hasVoted;
     }
 
+    // Maps a proposal ID to a map of a chain ID to summarized spoke voting data
+    mapping(uint256 => mapping(uint16 => SpokeProposalVote)) public spokeVotes;
     mapping(uint256 => ProposalVote) private _proposalVotes;
 
     /**
@@ -88,10 +107,18 @@ abstract contract GovernorCountingSimple is Governor {
         returns (bool)
     {
         ProposalVote storage proposalVote = _proposalVotes[proposalId];
+        uint256 abstainVotes = proposalVote.abstainVotes;
+        uint256 forVotes = proposalVote.forVotes;
 
-        return
-            quorum(proposalSnapshot(proposalId)) <=
-            proposalVote.forVotes + proposalVote.abstainVotes;
+        for (uint16 i = 0; i < spokeChains.length; i++) {
+            SpokeProposalVote storage v = spokeVotes[proposalId][
+                spokeChains[i]
+            ];
+            abstainVotes += v.abstainVotes;
+            forVotes += v.forVotes;
+        }
+
+        return quorum(proposalSnapshot(proposalId)) <= forVotes + abstainVotes;
     }
 
     /**
@@ -105,8 +132,17 @@ abstract contract GovernorCountingSimple is Governor {
         returns (bool)
     {
         ProposalVote storage proposalVote = _proposalVotes[proposalId];
+        uint256 againstVotes = proposalVote.againstVotes;
+        uint256 forVotes = proposalVote.forVotes;
 
-        return proposalVote.forVotes > proposalVote.againstVotes;
+        for (uint16 i = 0; i < spokeChains.length; i++) {
+            SpokeProposalVote storage v = spokeVotes[proposalId][
+                spokeChains[i]
+            ];
+            againstVotes += v.againstVotes;
+            forVotes += v.forVotes;
+        }
+        return forVotes > againstVotes;
     }
 
     /**
