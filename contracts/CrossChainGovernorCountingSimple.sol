@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts (last updated v4.9.0) (governance/extensions/GovernorCountingSimple.sol)
+// OpenZeppelin Contracts (last updated v4.8.0) (governance/extensions/GovernorCountingSimple.sol)
 
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/governance/Governor.sol";
 
 /**
- * @dev Extension of {Governor} for simple, 3 options, vote counting.
+ * @dev Extension of {Governor} for simple, 3 options, vote counting. Takes into consideration cross-chain voting.
  *
  * _Available since v4.3._
  */
@@ -47,7 +47,7 @@ abstract contract CrossChainGovernorCountingSimple is Governor {
     // Local (hub-chain) voting data
     mapping(uint256 => ProposalVote) private _proposalVotes;
 
-    // Maps a proposal ID to a map of a chain ID to summarized spoke voting data
+    // Maps to a list of summarized spoke voting data
     mapping(uint256 => mapping(uint16 => SpokeProposalVote)) public spokeVotes;
 
     /**
@@ -78,7 +78,7 @@ abstract contract CrossChainGovernorCountingSimple is Governor {
     }
 
     /**
-     * @dev Accessor to the internal vote counts.
+     * @dev Accessor to the internal local-chain vote counts.
      */
     function proposalVotes(uint256 proposalId)
         public
