@@ -11,21 +11,8 @@ import "@openzeppelin/contracts/governance/Governor.sol";
  * _Available since v4.3._
  */
 abstract contract CrossChainGovernorCountingSimple is Governor {
-    // The lz-chain IDs that the DAO expects to receive data from during the
-    // collection phase
-    uint16[] public spokeChains;
-
     constructor(uint16[] memory _spokeChains) {
         spokeChains = _spokeChains;
-    }
-
-    // Will store the vote data received from other chains
-    // Does not include a map of users to votes because that information stays on the spoke chains.
-    struct SpokeProposalVote {
-        uint256 forVotes;
-        uint256 againstVotes;
-        uint256 abstainVotes;
-        bool initialized;
     }
 
     /**
@@ -37,6 +24,9 @@ abstract contract CrossChainGovernorCountingSimple is Governor {
         Abstain
     }
 
+    // NOTE: it is most simple to keep ProposalVote and SpokeProposalVote separate, but it is conceivable to write logic
+    //       that combines them together.
+
     struct ProposalVote {
         uint256 againstVotes;
         uint256 forVotes;
@@ -44,9 +34,21 @@ abstract contract CrossChainGovernorCountingSimple is Governor {
         mapping(address => bool) hasVoted;
     }
 
+    struct SpokeProposalVote {
+        uint256 forVotes;
+        uint256 againstVotes;
+        uint256 abstainVotes;
+        bool initialized;
+    }
+
+    // The lz-chain IDs that the DAO expects to receive data from during the collection phase
+    uint16[] public spokeChains;
+
+    // Local (hub-chain) voting data
+    mapping(uint256 => ProposalVote) private _proposalVotes;
+
     // Maps a proposal ID to a map of a chain ID to summarized spoke voting data
     mapping(uint256 => mapping(uint16 => SpokeProposalVote)) public spokeVotes;
-    mapping(uint256 => ProposalVote) private _proposalVotes;
 
     /**
      * @dev See {IGovernor-COUNTING_MODE}.
