@@ -46,4 +46,27 @@ contract DAOSatellite is NonblockingLzApp {
     function isProposal(uint256 proposalId) public view returns (bool) {
         return proposals[proposalId].localVoteStart != 0;
     }
+
+    function _nonblockingLzReceive(
+        uint16 _srcChainId,
+        bytes memory,
+        uint64,
+        bytes memory _payload
+    ) internal override {
+        require(
+            _srcChainId == hubChain,
+            "Only messages from the hub chain can be received!"
+        );
+
+        uint16 option;
+        assembly {
+            option := mload(add(_payload, 32))
+        }
+
+        if (option == 0) {
+            // Begin a proposal on the local chain, with local block times
+        } else if (option == 1) {
+            // Send vote results back to the hub chain
+        }
+    }
 }
