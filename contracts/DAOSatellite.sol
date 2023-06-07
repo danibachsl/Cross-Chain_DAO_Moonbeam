@@ -104,5 +104,43 @@ contract DAOSatellite is NonblockingLzApp {
             });
             proposals[proposalId].voteFinished = true;
         }
+
+        // Mechanism that allows users to vote. Very simmilar to GovernorCountingSimple contract
+        function castVote(uint256 proposalId, uint8 support) public virtual returns (uint256 balance)
+        {
+            RemoteProposal storage proposal = proposals[proposalId];
+            require(
+                !proposal.voteFinished,
+                "DAOSatellite: vote not currently active"
+            );
+            require(
+                isProposal(proposalId), 
+                "DAOSatellite: not a started vote"
+            );
+
+            uint256 weight = token.getPastVotes(msg.sender, proposal.localVoteStart);
+            _countVote(proposalId, msg.sender, support, weight);
+
+            return weight;
+        }
+
+        function _countVote(uint256 proposalId, address account, uint8 support, uint256 weight) internal virtual 
+        {
+            ProposalVote storage proposalVote = proposalVotes[proposalId];
+
+            require(!proposalVote.hasVoted[account], "DAOSatellite: vote already cast");
+            proposalVote.hasVoted[account] = true;
+
+            if (support == uint8(VoteType.Against)) {
+                proposalVote.againstVotes += weight;
+            } else if (support == uint8(VoteType.For)) {
+                proposalVote.forVotes += weight;
+            } else if (support == uint8(VoteType.Abstain)) {
+                proposalVote.abstainVotes += weight;
+            } else {
+                revert("DAOSatellite: invalid value for enum VoteType");
+            }
+        }
+
     }
 }
