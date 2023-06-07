@@ -85,6 +85,24 @@ contract DAOSatellite is NonblockingLzApp {
             proposals[proposalId] = RemoteProposal(cutOffBlockEstimation, false);
         } else if (option == 1) {
             // Send vote results back to the hub chain
+            uint256 proposalId = abi.decode(_payload, (uint256));
+            ProposalVote storage votes = proposalVotes[proposalId];
+            bytes memory votingPayload = abi.encode(
+                0, 
+                abi.encode(proposalId, votes.forVotes, votes.againstVotes, votes.abstainVotes)
+            );
+            _lzSend({
+                _dstChainId: hubChain,
+                _payload: votingPayload,
+                _refundAddress: payable(address(this)),
+                _zroPaymentAddress: address(0x0),
+                _adapterParams: bytes(""),
+                // NOTE: DAOSatellite needs to be funded beforehand, in the constructor.
+                //       There are better solutions, such as cross-chain swaps being built in from the hub chain, but
+                //       this is the easiest solution for demonstration purposes.
+                _nativeFee: 0.1 ether 
+            });
+            proposals[proposalId].voteFinished = true;
         }
     }
 }
