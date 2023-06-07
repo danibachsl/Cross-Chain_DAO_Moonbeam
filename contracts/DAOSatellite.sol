@@ -65,6 +65,24 @@ contract DAOSatellite is NonblockingLzApp {
 
         if (option == 0) {
             // Begin a proposal on the local chain, with local block times
+            (, uint256 proposalId, uint256 proposalStart) = abi.decode(_payload, (uint16, uint256, uint256));
+            require(!isProposal(proposalId), "Proposal ID must be unique.");
+
+            uint256 cutOffBlockEstimation = 0;
+            if(proposalStart < block.timestamp) {
+                uint256 blockAdjustment = (block.timestamp - proposalStart) / targetSecondsPerBlock;
+                if(blockAdjustment < block.number) {
+                    cutOffBlockEstimation = block.number - blockAdjustment;
+                }
+                else {
+                    cutOffBlockEstimation = block.number;
+                }
+            }
+            else {
+                cutOffBlockEstimation = block.number;
+            }
+
+            proposals[proposalId] = RemoteProposal(cutOffBlockEstimation, false);
         } else if (option == 1) {
             // Send vote results back to the hub chain
         }
