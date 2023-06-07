@@ -139,6 +139,7 @@ contract DAOSatellite is NonblockingLzApp {
             proposals[proposalId].voteFinished = true;
             emit SendingQuorumDataToHub(proposalId, votes.forVotes, votes.againstVotes, votes.abstainVotes);
         }
+    }
         // Implementation for voting cancelation
         function cancelVoting(uint256 proposalId) public {
             RemoteProposal storage proposal = proposals[proposalId];
@@ -148,7 +149,6 @@ contract DAOSatellite is NonblockingLzApp {
 
             proposal.canceled = true;
         }
-    }
 
     // Explicitly mark the contract as payable so that additional cross-chain gas & transaction refunds can occur
     receive() external payable { }
