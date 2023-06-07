@@ -42,6 +42,7 @@ contract DAOSatellite is NonblockingLzApp {
         //          Will need a proper solution still to fix in case of such a scenario
         uint256 localVoteStart; // You could also use uint64 in the Timers library, like OpenZeppelin uses
         bool voteFinished;
+        bool canceled;
         // bool canceled; TODO: implement cancelation on your own
     }
 
@@ -62,6 +63,7 @@ contract DAOSatellite is NonblockingLzApp {
             isProposal(proposalId), 
             "DAOSatellite: not a started vote"
         );
+        require(!proposal.canceled, "DAOSatellite: voting canceled");
 
         uint256 weight = token.getPastVotes(msg.sender, proposal.localVoteStart);
         _countVote(proposalId, msg.sender, support, weight);
@@ -113,7 +115,7 @@ contract DAOSatellite is NonblockingLzApp {
                 cutOffBlockEstimation = block.number;
             }
 
-            proposals[proposalId] = RemoteProposal(cutOffBlockEstimation, false);
+            proposals[proposalId] = RemoteProposal(cutOffBlockEstimation, false, false);
             emit RemoteProposalReceived(proposalId, cutOffBlockEstimation);
         }
         // 1. Send vote results back to the local chain
@@ -137,7 +139,15 @@ contract DAOSatellite is NonblockingLzApp {
             proposals[proposalId].voteFinished = true;
             emit SendingQuorumDataToHub(proposalId, votes.forVotes, votes.againstVotes, votes.abstainVotes);
         }
-        // TODO: 2. Implement voting cancelation (out of scope for tutorial)
+        // Implementation for voting cancelation
+        function cancelVoting(uint256 proposalId) public {
+            RemoteProposal storage proposal = proposals[proposalId];
+            require(proposal.localVoteStart != 0, "DAOSatellite: invalid proposalId");
+            require(!proposal.voteFinished, "DAOSatellite: voting already finished");
+            require(!proposal.canceled, "DAOSatellite: voting already canceled");
+
+            proposal.canceled = true;
+        }
     }
 
     // Explicitly mark the contract as payable so that additional cross-chain gas & transaction refunds can occur
